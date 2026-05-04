@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   Theme tokens
+   Dark is default; `[data-theme='light']` on <html> swaps in the light set.
+   Colors are declared as bare RGB triplets so Tailwind's <alpha-value>
+   syntax works (see tailwind.config.ts).
+   ========================================================================= */
+
+:root,
+[data-theme='dark'] {
+  --color-bg:        13 13 18;    /* #0d0d12 */
+  --color-surface:   17 17 24;    /* #111118 */
+  --color-elevated:  22 22 31;    /* #16161f */
+  --color-border:    30 30 46;    /* #1e1e2e */
+  --color-text:      232 232 240; /* #e8e8f0 */
+  --color-muted:     107 107 128; /* #6b6b80 */
+  --color-accent:    99 102 241;  /* indigo-500 */
+}
+
+[data-theme='light'] {
+  --color-bg:        247 247 245; /* #f7f7f5 */
+  --color-surface:   240 240 238; /* #f0f0ee */
+  --color-elevated:  255 255 255; /* #ffffff */
+  --color-border:    224 224 220; /* #e0e0dc */
+  --color-text:      26 26 26;    /* #1a1a1a */
+  --color-muted:     107 114 128; /* #6b7280 */
+  --color-accent:    79 70 229;   /* indigo-600 */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+  font-family: theme('fontFamily.sans');
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animate every themed color over 200ms. */
+html,
+html * {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Reduced motion — respect user settings */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Scrollbar styling — subtle */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-border));
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-muted));
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+
+/* Disable text selection on UI chrome */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* =========================================================================
+   Tiptap prose styling
+   We don't ship @tailwindcss/typography to keep the bundle lean — the
+   editor's HTML is just <p>, <h1..h3>, <ul>, <ol>, <blockquote>,
+   <strong>, <em>, <a>, <img>, <span class="jarvis-mention">, plus
+   the placeholder. Style each minimally.
+   ========================================================================= */
+
+.jarvis-prose {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgb(var(--color-text));
+}
+
+.jarvis-prose p {
+  margin: 0 0 0.6em 0;
+}
+.jarvis-prose h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+  letter-spacing: -0.01em;
+}
+.jarvis-prose h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+}
+.jarvis-prose h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0.6em 0 0.2em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(var(--color-muted));
+}
+.jarvis-prose ul,
+.jarvis-prose ol {
+  padding-left: 1.4em;
+  margin: 0.4em 0;
+}
+.jarvis-prose ul {
+  list-style: disc;
+}
+.jarvis-prose ol {
+  list-style: decimal;
+}
+.jarvis-prose blockquote {
+  margin: 0.6em 0;
+  padding: 0.1em 0 0.1em 0.8em;
+  border-left: 2px solid rgb(var(--color-border));
+  color: rgb(var(--color-muted));
+}
+/* Summary blockquote (first child): distinct callout */
+.jarvis-prose > blockquote:first-child {
+  border-left: none;
+  border: 1px solid rgb(var(--color-accent) / 0.2);
+  background: rgb(var(--color-accent) / 0.05);
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgb(var(--color-text) / 0.8);
+}
+
+/* Collapsible sections: h2 as toggle */
+.jarvis-prose h2 {
+  cursor: pointer;
+  position: relative;
+  padding-left: 1.1em;
+}
+.jarvis-prose h2::before {
+  content: '▾';
+  position: absolute;
+  left: 0;
+  font-size: 10px;
+  color: rgb(var(--color-muted));
+  transition: transform 150ms;
+}
+.jarvis-prose h2.collapsed::before {
+  transform: rotate(-90deg);
+}
+.jarvis-prose .collapsed-section {
+  display: none;
+}
+.jarvis-prose code {
+  font-family: theme('fontFamily.mono');
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  background: rgb(var(--color-elevated));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 4px;
+}
+.jarvis-prose pre {
+  background: rgb(var(--color-elevated));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 6px;
+  padding: 0.7em 0.9em;
+  margin: 0.6em 0;
+  overflow-x: auto;
+}
+.jarvis-prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.jarvis-prose .jarvis-link {
+  color: rgb(var(--color-accent));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.jarvis-prose .jarvis-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5em 0;
+  border: 1px solid rgb(var(--color-border));
+}
+.jarvis-prose .jarvis-mention {
+  display: inline-block;
+  padding: 0.05em 0.4em;
+  margin: 0 0.05em;
+  background: rgb(var(--color-elevated));
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 999px;
+  font-size: 0.92em;
+  color: rgb(var(--color-accent));
+  cursor: default;
+}
+
+/* Placeholder for empty editor */
+.jarvis-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgb(var(--color-muted));
+  pointer-events: none;
+  height: 0;
+}
+
+/* ProseMirror needs explicit caret colour in dark mode */
+.jarvis-prose {
+  caret-color: rgb(var(--color-accent));
+}
