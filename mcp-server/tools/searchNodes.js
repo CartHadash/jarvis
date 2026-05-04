@@ -6,10 +6,11 @@
  */
 
 import { z } from 'zod';
+import { htmlToMarkdown } from '../lib/htmlToMarkdown.js';
 
 export const name = 'jarvis_search_nodes';
 export const description =
-  'Search Jarvis nodes by title and content using full-text search. Returns matching nodes with relevance ordering.';
+  'Search Jarvis nodes by title and content using full-text search. Returns matching nodes with relevance ordering. Content is markdown by default.';
 const NODE_TYPES = ['concept', 'source', 'goal', 'decision', 'question', 'person', 'event'];
 const STATUSES = ['seedling', 'growing', 'evergreen', 'stale'];
 
@@ -20,10 +21,11 @@ export const inputSchema = z
     node_type: z.enum(NODE_TYPES).optional(),
     status: z.enum(STATUSES).optional(),
     tags: z.array(z.string()).optional(),
+    format: z.enum(['markdown', 'html']).default('markdown'),
   })
   .strict();
 
-export function handler({ query, limit, node_type, status, tags: filterTags }, db) {
+export function handler({ query, limit, node_type, status, tags: filterTags, format = 'markdown' }, db) {
   const fts = sanitize(query);
   if (!fts) return { count: 0, nodes: [] };
 
@@ -59,6 +61,7 @@ export function handler({ query, limit, node_type, status, tags: filterTags }, d
 
   let nodes = rows.map((r) => ({
     ...r,
+    content: format === 'html' ? r.content : htmlToMarkdown(r.content),
     tags: tagMap.get(r.id) ?? [],
   }));
 
