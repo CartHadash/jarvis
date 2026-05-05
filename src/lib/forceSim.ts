@@ -26,6 +26,13 @@ export const COLLIDE_PAD = 1;
 export const LONG_GOAL_GRAVITY = 0.08;   // pulls toward center
 export const SHORT_GOAL_GRAVITY = -0.04; // pushes away from center
 export const SHARED_TAG_BOOST = 1.6;     // 1.0 = no boost
+
+// Radial layout: most-connected nodes pulled toward center, sparsely
+// connected ones to the outer ring. Strength is intentionally low so
+// it acts as gentle structural gravity rather than a hard constraint —
+// the user can still drag freely.
+export const RADIAL_STRENGTH = 0.12;
+export const RADIAL_MARGIN = 0.42; // fraction of min(width, height)
 // ────────────────────────────────────────────────────────────────────────
 
 export interface SimNode extends d3.SimulationNodeDatum {
@@ -130,6 +137,28 @@ export function createSimulation(
     }
   };
 
+  // Radial layout: degree → target ring distance. Most-connected → center.
+  const cx = width / 2;
+  const cy = height / 2;
+  const maxR = Math.min(width, height) * RADIAL_MARGIN;
+  const maxDegree = Math.max(1, ...simNodes.map((n) => n.connectionCount));
+  const targetRadius = (n: SimNode): number => {
+    const norm = n.connectionCount / maxDegree; // 0..1
+    return (1 - norm) * maxR;
+  };
+
+  // Seed initial positions on a circle at each node's target ring,
+  // angle-sorted by degree (descending) so the cold-open frame is
+  // already structured rather than visually random.
+  const sortedByDegreeDesc = [...simNodes].sort((a, b) => b.connectionCount - a.connectionCount);
+  sortedByDegreeDesc.forEach((n, i) => {
+    if (n.x != null && n.y != null && (n.x !== 0 || n.y !== 0)) return;
+    const r = targetRadius(n);
+    const theta = (i / sortedByDegreeDesc.length) * Math.PI * 2;
+    n.x = cx + Math.cos(theta) * r;
+    n.y = cy + Math.sin(theta) * r;
+  });
+
   const sim = d3
     .forceSimulation<SimNode>(simNodes)
     .force('link', linkForce)
@@ -137,7 +166,11 @@ export function createSimulation(
       .strength(CHARGE)
       .distanceMin(5)
       .distanceMax(150))
-    .force('center', d3.forceCenter<SimNode>(width / 2, height / 2))
+    .force('center', d3.forceCenter<SimNode>(cx, cy))
+    .force(
+      'radial',
+      d3.forceRadial<SimNode>(targetRadius, cx, cy).strength(RADIAL_STRENGTH),
+    )
     .force(
       'collide',
       d3.forceCollide<SimNode>().radius((n) => n.radius + COLLIDE_PAD).strength(0.5),
