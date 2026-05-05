@@ -75,6 +75,15 @@ export function NodePanel() {
   const [mounted, setMounted] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [exportStatus, setExportStatus] = useState<
+    { kind: 'success' | 'error'; message: string } | null
+  >(null);
+
+  useEffect(() => {
+    if (!exportStatus) return;
+    const t = window.setTimeout(() => setExportStatus(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [exportStatus]);
   const closeTimer = useRef<number | null>(null);
 
   const connectedSet = useMemo(
@@ -500,9 +509,12 @@ export function NodePanel() {
                 if (!isTauri() || !node) return;
                 try {
                   const path = await dbExportNodeMarkdown(node.id);
-                  window.open(`file://${path}`);
+                  const filename = path.split('/').pop() ?? path;
+                  setExportStatus({ kind: 'success', message: `Saved ${filename}` });
                 } catch (err) {
+                  const msg = err instanceof Error ? err.message : String(err);
                   console.error('[jarvis] export failed', err);
+                  setExportStatus({ kind: 'error', message: `Export failed: ${msg}` });
                 }
               }}
               className="text-[10px] text-muted hover:text-text"
@@ -537,6 +549,18 @@ export function NodePanel() {
               </button>
             )}
           </div>
+          {exportStatus && (
+            <div
+              className={`mt-2 rounded-md border px-2 py-1.5 text-[11px] ${
+                exportStatus.kind === 'success'
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                  : 'border-red-500/40 bg-red-500/10 text-red-300'
+              }`}
+              role="status"
+            >
+              {exportStatus.message}
+            </div>
+          )}
         </section>
       </div>
 

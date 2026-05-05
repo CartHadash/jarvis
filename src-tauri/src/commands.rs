@@ -254,5 +254,30 @@ pub fn export_node_markdown(db: State<'_, Db>, id: String) -> AppResult<String> 
     let all_nodes = db.list_nodes()?;
     let edges = db.list_edges()?;
     let path = markdown::export_single_node(&db.data_dir, &node, &edges, &all_nodes)?;
-    Ok(path.to_string_lossy().into_owned())
+    let path_str = path.to_string_lossy().into_owned();
+
+    // Reveal in Finder (macOS). Errors here are non-fatal — the file
+    // exists either way, so we still return its path to the frontend.
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .args(["-R", &path_str])
+            .spawn();
+    }
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(parent) = path.parent() {
+            let _ = std::process::Command::new("xdg-open")
+                .arg(parent)
+                .spawn();
+        }
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("explorer")
+            .args(["/select,", &path_str])
+            .spawn();
+    }
+
+    Ok(path_str)
 }
