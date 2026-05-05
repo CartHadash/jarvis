@@ -406,9 +406,14 @@ export function NodePanel() {
             <button
               type="button"
               onClick={() => setShowConnectDialog(true)}
-              className="text-[11px] text-muted hover:text-text"
+              className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-surface/50 px-2 py-1 text-xs font-medium text-text/90 transition-colors duration-150 ease-cubic-out hover:border-accent/60 hover:bg-surface hover:text-text active:translate-y-px"
+              title="Connect this node to another"
             >
-              + Add
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add
             </button>
           </div>
 
@@ -502,7 +507,7 @@ export function NodePanel() {
               </>
             )}
           </dl>
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/40 pt-3">
             <button
               type="button"
               onClick={async () => {
@@ -517,24 +522,30 @@ export function NodePanel() {
                   setExportStatus({ kind: 'error', message: `Export failed: ${msg}` });
                 }
               }}
-              className="text-[10px] text-muted hover:text-text"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/50 px-2.5 py-1.5 text-xs font-medium text-text/90 transition-colors duration-150 ease-cubic-out hover:border-accent/60 hover:bg-surface hover:text-text active:translate-y-px"
+              title="Save this node as a markdown file and reveal in Finder"
             >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
               Export .md
             </button>
             {confirmingDelete ? (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted">Delete this node?</span>
+                <span className="text-xs text-muted">Delete this node?</span>
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(false)}
-                  className="rounded-md px-2 py-1 text-[10px] text-muted hover:text-text"
+                  className="rounded-md border border-border/60 bg-surface/50 px-2.5 py-1.5 text-xs font-medium text-text/90 transition-colors hover:bg-surface"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="rounded-md bg-red-600 px-2 py-1 text-[10px] font-medium text-white hover:opacity-90"
+                  className="rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-500 active:translate-y-px"
                 >
                   Delete
                 </button>
@@ -543,9 +554,17 @@ export function NodePanel() {
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                className="text-[10px] text-muted hover:text-red-500"
+                className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/5 px-2.5 py-1.5 text-xs font-medium text-red-400 transition-colors duration-150 ease-cubic-out hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-300 active:translate-y-px"
+                title="Delete this node permanently"
               >
-                Delete node
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                Delete
               </button>
             )}
           </div>
