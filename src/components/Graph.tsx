@@ -354,7 +354,8 @@ function GraphSvg() {
         d3.select(this)
           .select('circle')
           .transition()
-          .duration(150)
+          .duration(180)
+          .ease(d3.easeCubicOut)
           .attr('r', d.radius * 1.15);
         applyHighlight(d.id);
         updateLabelVisibility(d.id);
@@ -364,7 +365,8 @@ function GraphSvg() {
         d3.select(this)
           .select('circle')
           .transition()
-          .duration(150)
+          .duration(180)
+          .ease(d3.easeCubicOut)
           .attr('r', d.radius);
         // Revert to focused state (or neutral if nothing focused).
         applyHighlight(focusedId);

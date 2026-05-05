@@ -49,6 +49,31 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Subtle radial vignette: gives the canvas centre a sense of "lit"
+   focal point without competing with content. Strength is intentionally
+   tiny (~3% opacity delta) so it reads as depth rather than as a
+   gradient feature. */
+body {
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgb(var(--color-bg)) 0%,
+      rgb(var(--color-bg)) 55%,
+      rgb(0 0 0 / 0.18) 100%
+    );
+  background-attachment: fixed;
+}
+[data-theme='light'] body {
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgb(var(--color-bg)) 0%,
+      rgb(var(--color-bg)) 55%,
+      rgb(0 0 0 / 0.04) 100%
+    );
+  background-attachment: fixed;
+}
+
 /* Animate every themed color over 200ms. */
 html,
 html * {
