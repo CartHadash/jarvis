@@ -152,3 +152,16 @@ export const dbExportVault = (): Promise<string> => invoke('export_vault_cmd');
 /** Export a single node as markdown. Returns the file path. */
 export const dbExportNodeMarkdown = (id: string): Promise<string> =>
   invoke('export_node_markdown', { id });
+
+/** One revision row from `node_history`. Newest first. */
+export interface NodeRevision {
+  version: number;
+  title: string;
+  content: string;
+  summary?: string;
+  edited_at: string;
+}
+
+/** List all prior revisions of a node (most recent first). */
+export const dbListNodeHistory = (id: string): Promise<NodeRevision[]> =>
+  invoke('list_node_history', { id });

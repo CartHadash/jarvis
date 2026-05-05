@@ -8,7 +8,7 @@ use crate::error::AppResult;
 use crate::images::save_image_to_dir;
 use crate::index_writer::write_index;
 use crate::markdown;
-use crate::models::{DailyLog, Edge, Node, SessionLogEntry, Tag};
+use crate::models::{DailyLog, Edge, Node, NodeRevision, SessionLogEntry, Tag};
 use serde_json::Value;
 use tauri::State;
 
@@ -246,6 +246,11 @@ pub fn export_vault_cmd(db: State<'_, Db>) -> AppResult<String> {
     let tags = db.list_tags()?;
     let path = markdown::export_vault(&db.data_dir, &nodes, &edges, &tags)?;
     Ok(path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+pub fn list_node_history(db: State<'_, Db>, id: String) -> AppResult<Vec<NodeRevision>> {
+    db.list_node_history(&id)
 }
 
 #[tauri::command]

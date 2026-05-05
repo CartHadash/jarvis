@@ -74,6 +74,7 @@ pub fn run() {
             commands::append_daily_log,
             commands::export_vault_cmd,
             commands::export_node_markdown,
+            commands::list_node_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Jarvis");

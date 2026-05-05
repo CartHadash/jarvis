@@ -87,3 +87,17 @@ pub struct IndexFile {
     pub last_updated: String,
     pub nodes: Vec<IndexNode>,
 }
+
+/// One revision of a node, captured by the BEFORE-UPDATE trigger.
+/// `version` increments per node starting at 1. `edited_at` is the
+/// `updated_at` value the row had when this snapshot was taken — i.e.
+/// the moment that revision *stopped being current*.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeRevision {
+    pub version: i64,
+    pub title: String,
+    pub content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    pub edited_at: String,
+}

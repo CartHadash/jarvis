@@ -1,5 +1,5 @@
 use crate::error::{AppError, AppResult};
-use crate::models::{DailyLog, Edge, Node, SessionLogEntry, Tag};
+use crate::models::{DailyLog, Edge, Node, NodeRevision, SessionLogEntry, Tag};
 use chrono::Utc;
 use parking_lot::Mutex;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension, Row};
@@ -9,6 +9,7 @@ use uuid::Uuid;
 const MIGRATION_V1: &str = include_str!("../migrations/0001_init.sql");
 const MIGRATION_V3: &str = include_str!("../migrations/0003_v2_schema.sql");
 const MIGRATION_V4: &str = include_str!("../migrations/0004_daily_logs.sql");
+const MIGRATION_V5: &str = include_str!("../migrations/0005_node_history.sql");
 
 pub struct Db {
     pub conn: Mutex<Connection>,
@@ -43,6 +44,9 @@ impl Db {
 
         // v4: daily_logs table for session continuity
         conn.execute_batch(MIGRATION_V4)?;
+
+        // v5: per-node revision history (trigger-driven snapshots)
+        conn.execute_batch(MIGRATION_V5)?;
 
         let db = Self {
             conn: Mutex::new(conn),
@@ -542,6 +546,32 @@ impl Db {
             model: model.map(|s| s.to_string()),
             token_count,
         })
+    }
+
+    /// Return the revision history for a node, newest first.
+    /// Each row represents a *previous* version that has been replaced.
+    pub fn list_node_history(&self, node_id: &str) -> AppResult<Vec<NodeRevision>> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            "SELECT version, title, content, summary, edited_at
+               FROM node_history
+              WHERE node_id = ?1
+              ORDER BY version DESC",
+        )?;
+        let rows = stmt.query_map(params![node_id], |r| {
+            Ok(NodeRevision {
+                version: r.get(0)?,
+                title: r.get(1)?,
+                content: r.get(2)?,
+                summary: r.get::<_, Option<String>>(3)?,
+                edited_at: r.get(4)?,
+            })
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            out.push(row?);
+        }
+        Ok(out)
     }
 
     pub fn append_session_log(&self, content: &str, type_: &str) -> AppResult<SessionLogEntry> {

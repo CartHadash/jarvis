@@ -22,6 +22,7 @@ import { useDebouncedSave } from '@/hooks/useDebouncedSave';
 import { ConnectionSearch } from '@/components/ConnectionSearch';
 import { MiniGraph } from '@/components/MiniGraph';
 import { NodeEditor } from '@/components/NodeEditor';
+import { NodeHistory } from '@/components/NodeHistory';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -535,6 +536,9 @@ export function NodePanel() {
             <MiniGraph centerNode={node} />
           </section>
         )}
+
+        {/* ── History (revisions) ───────────────────────────────────── */}
+        <NodeHistory nodeId={node.id} currentContent={node.content} />
 
         {/* ── Metadata + Delete ─────────────────────────────────────── */}
         <section className="border-t border-border px-4 py-3">
