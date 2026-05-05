@@ -1,13 +1,17 @@
 /**
  * /lint — read-only audit of graph health.
  *
- * Checks:
- *   1. Orphans: nodes with zero edges
- *   2. Stale: updated_at > 90 days & status != evergreen
+ * Original health checks plus Karpathy second-brain principles:
+ *   1. Orphans: nodes with zero edges          (dense linking)
+ *   2. Stale: updated_at > 90 days & not evergreen
  *   3. Edge label distribution: flag if related_to > 30%
  *   4. Tag distribution: flag single-use tags
  *   5. Type distribution: flag if question count = 0
  *   6. Review due: review_due <= today
+ *   7. Missing summary: empty or trivial      (summary-first)
+ *   8. Oversized: word count > 800            (atomic)
+ *   9. Multi-concept: >5 headings              (atomic)
+ *  10. Weakly linked: exactly 1 edge after 3d  (dense linking)
  */
 
 import { useMemo } from 'react';
@@ -15,6 +19,16 @@ import { useGraphStore } from '@/hooks/useGraph';
 import type { EdgeLabel, Node } from '@/types';
 
 const STALE_DAYS = 90;
+const ATOMIC_WORD_LIMIT = 800;
+const ATOMIC_HEADING_LIMIT = 5;
+const SUMMARY_MIN_CHARS = 25;
+const WEAK_LINK_GRACE_DAYS = 3;
+
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, ' ');
+const wordCount = (s: string) =>
+  stripHtml(s ?? '').split(/\s+/).filter(Boolean).length;
+const headingCount = (s: string) =>
+  ((s ?? '').match(/(<h[1-6]\b)|(^|\n)#{1,6}\s/g) ?? []).length;
 
 interface LintIssue {
   severity: 'warn' | 'info';
@@ -131,6 +145,66 @@ function runLint(nodes: Node[], edges: { source: string; target: string; label?:
       title: `${due.length} node${due.length > 1 ? 's' : ''} due for review`,
       detail: due.map((n) => `${n.title} (${n.review_due})`).join(', '),
       nodeIds: due.map((n) => n.id),
+    });
+  }
+
+  // 7. Karpathy: missing or trivial summary (summary-first principle)
+  const noSummary = nodes.filter(
+    (n) => !n.summary || n.summary.trim().length < SUMMARY_MIN_CHARS,
+  );
+  if (noSummary.length > 0) {
+    issues.push({
+      severity: 'warn',
+      title: `${noSummary.length} node${noSummary.length > 1 ? 's' : ''} without a meaningful summary`,
+      detail:
+        'Empty or trivial summaries waste jarvis_get_summaries — Claude reads them first when scanning the graph.',
+      nodeIds: noSummary.map((n) => n.id),
+    });
+  }
+
+  // 8. Karpathy: oversized content (atomic principle)
+  const oversized = nodes.filter((n) => wordCount(n.content) > ATOMIC_WORD_LIMIT);
+  if (oversized.length > 0) {
+    issues.push({
+      severity: 'warn',
+      title: `${oversized.length} oversized node${oversized.length > 1 ? 's' : ''} (>${ATOMIC_WORD_LIMIT} words)`,
+      detail: 'Atomic notes — one concept each — beat monoliths. Consider splitting these into linked smaller nodes.',
+      nodeIds: oversized.map((n) => n.id),
+    });
+  }
+
+  // 9. Karpathy: multi-concept heading count (atomic principle)
+  const multiConcept = nodes.filter(
+    (n) => headingCount(n.content) > ATOMIC_HEADING_LIMIT && !oversized.includes(n),
+  );
+  if (multiConcept.length > 0) {
+    issues.push({
+      severity: 'info',
+      title: `${multiConcept.length} multi-concept node${multiConcept.length > 1 ? 's' : ''} (>${ATOMIC_HEADING_LIMIT} headings)`,
+      detail: 'Many headings often signal multiple concepts in one node. Consider splitting.',
+      nodeIds: multiConcept.map((n) => n.id),
+    });
+  }
+
+  // 10. Karpathy: weakly linked (dense linking principle)
+  const edgeCount = new Map<string, number>();
+  for (const e of edges) {
+    edgeCount.set(e.source, (edgeCount.get(e.source) ?? 0) + 1);
+    edgeCount.set(e.target, (edgeCount.get(e.target) ?? 0) + 1);
+  }
+  const graceMs = WEAK_LINK_GRACE_DAYS * 86400000;
+  const weakly = nodes.filter((n) => {
+    const c = edgeCount.get(n.id) ?? 0;
+    if (c !== 1) return false;
+    const created = new Date(n.created_at).getTime();
+    return now - created >= graceMs;
+  });
+  if (weakly.length > 0) {
+    issues.push({
+      severity: 'info',
+      title: `${weakly.length} weakly linked node${weakly.length > 1 ? 's' : ''} (only 1 edge)`,
+      detail: 'Add at least one more meaningful connection so this node is reachable from two paths.',
+      nodeIds: weakly.map((n) => n.id),
     });
   }
 
