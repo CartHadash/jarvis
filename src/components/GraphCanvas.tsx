@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { selectVisibleNodeIds, useGraphStore } from '@/hooks/useGraph';
+import { edgeWidth } from '@/lib/graphConstants';
 import {
   buildSimData,
   createSimulation,
@@ -119,7 +120,7 @@ export function GraphCanvas() {
         ctx.strokeStyle = (vis && edgeFocused && labelVisible)
           ? (edgeColorMap[label] ?? 'rgba(156,163,175,0.45)')
           : (dimEdgeColor[label] ?? 'rgba(120,120,140,0.08)');
-        ctx.lineWidth = label === 'contradicts' ? 2 : 1;
+        ctx.lineWidth = edgeWidth(label);
         if (l.createdBy === 'claude' || label === 'replaces') ctx.setLineDash([4, 4]);
         else ctx.setLineDash([]);
         ctx.beginPath();

@@ -29,6 +29,7 @@ import {
   type SimNode,
 } from '@/lib/forceSim';
 import { GraphCanvas } from '@/components/GraphCanvas';
+import { edgeWidth } from '@/lib/graphConstants';
 
 const EDGE_DIM = 0.12;
 const NODE_DIM = 0.15;
@@ -140,7 +141,7 @@ function GraphSvg() {
       .attr('data-id', (d) => d.id)
       .attr('stroke', (d) => EDGE_LABEL_COLORS[d.label ?? 'related_to'] ?? '#9ca3af')
       .attr('stroke-opacity', 0.4)
-      .attr('stroke-width', (d) => (d.label === 'contradicts' ? 2 : 1))
+      .attr('stroke-width', (d) => edgeWidth(d.label))
       .attr('stroke-dasharray', (d) =>
         d.createdBy === 'claude' || d.label === 'replaces' ? '4 4' : null,
       );
