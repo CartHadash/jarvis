@@ -32,6 +32,7 @@ import { openDb } from './db.js';
 import * as readIndex from './tools/readIndex.js';
 import * as getNode from './tools/getNode.js';
 import * as bulkGet from './tools/bulkGet.js';
+import * as getBacklinks from './tools/getBacklinks.js';
 import * as searchNodes from './tools/searchNodes.js';
 import * as createNode from './tools/createNode.js';
 import * as updateNode from './tools/updateNode.js';
@@ -47,6 +48,7 @@ const TOOLS = [
   readIndex,
   getNode,
   bulkGet,
+  getBacklinks,
   searchNodes,
   createNode,
   updateNode,

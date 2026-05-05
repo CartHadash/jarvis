@@ -165,19 +165,25 @@ export function NodePanel() {
   const updated = formatDate(node.updated_at);
 
   // ── Edges grouped by label ──────────────────────────────────────────
+  // Outgoing edges (this node points OUT) drive the "Connections" panel.
+  // Incoming edges (other nodes point AT us) drive the "Backlinks" panel.
   const nodeEdges = edges.filter(
     (e) => e.source === node.id || e.target === node.id,
   );
   const edgesByLabel = new Map<string, { otherId: string; edgeId: string; direction: 'out' | 'in' }[]>();
+  const backlinksByLabel = new Map<string, { otherId: string; edgeId: string }[]>();
   for (const e of nodeEdges) {
     const label = e.label ?? 'related_to';
-    if (!edgesByLabel.has(label)) edgesByLabel.set(label, []);
-    edgesByLabel.get(label)!.push({
-      otherId: e.source === node.id ? e.target : e.source,
-      edgeId: e.id,
-      direction: e.source === node.id ? 'out' : 'in',
-    });
+    if (e.source === node.id) {
+      if (!edgesByLabel.has(label)) edgesByLabel.set(label, []);
+      edgesByLabel.get(label)!.push({ otherId: e.target, edgeId: e.id, direction: 'out' });
+    } else {
+      if (!backlinksByLabel.has(label)) backlinksByLabel.set(label, []);
+      backlinksByLabel.get(label)!.push({ otherId: e.source, edgeId: e.id });
+    }
   }
+  const outgoingCount = Array.from(edgesByLabel.values()).reduce((a, v) => a + v.length, 0);
+  const backlinkCount = Array.from(backlinksByLabel.values()).reduce((a, v) => a + v.length, 0);
 
   // ── Mutation handlers ───────────────────────────────────────────────
   const handleFieldChange = async (field: string, value: string | null) => {
@@ -401,7 +407,7 @@ export function NodePanel() {
         <section className="border-t border-border px-4 py-4">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-[10px] font-medium uppercase tracking-widest text-muted">
-              Connections ({nodeEdges.length})
+              Connections ({outgoingCount})
             </h2>
             <button
               type="button"
@@ -417,9 +423,9 @@ export function NodePanel() {
             </button>
           </div>
 
-          {nodeEdges.length === 0 ? (
+          {outgoingCount === 0 ? (
             <p className="text-[12px] text-muted">
-              No connections yet. Use <kbd className="font-mono">@</kbd> in the
+              No outgoing connections yet. Use <kbd className="font-mono">@</kbd> in the
               editor or click <em>Add</em>.
             </p>
           ) : (
@@ -470,6 +476,55 @@ export function NodePanel() {
             </div>
           )}
         </section>
+
+        {/* ── Backlinks (incoming edges) ─────────────────────────────── */}
+        {backlinkCount > 0 && (
+          <section className="border-t border-border px-4 py-4">
+            <h2 className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-muted">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="20" y1="12" x2="4" y2="12" />
+                <polyline points="10 6 4 12 10 18" />
+              </svg>
+              Backlinks ({backlinkCount})
+            </h2>
+            <div className="space-y-3">
+              {Array.from(backlinksByLabel.entries()).map(([label, items]) => (
+                <div key={`bl-${label}`}>
+                  <h3 className="mb-1 text-[10px] font-medium text-muted">
+                    {EDGE_LABEL_DISPLAY[label] ?? label} ({items.length})
+                  </h3>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {items.map(({ otherId }) => {
+                      const c = nodes.find((n) => n.id === otherId);
+                      if (!c) return null;
+                      const cColor = (c.tags.length > 0 ? tagColors[c.tags[0]] : undefined) ?? '#6b7280';
+                      return (
+                        <li key={`bl-${otherId}`}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              selectNode(c.id);
+                              flyToNode(c.id);
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-elevated/60 px-2.5 py-1 text-[11px] text-text transition-colors hover:border-accent"
+                            title={`${c.title} → this node (${EDGE_LABEL_DISPLAY[label] ?? label})`}
+                          >
+                            <span
+                              aria-hidden
+                              className="inline-block h-1.5 w-1.5 rounded-full"
+                              style={{ backgroundColor: cColor }}
+                            />
+                            <span className="max-w-[140px] truncate">{c.title}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ── MiniGraph ─────────────────────────────────────────────── */}
         {nodeEdges.length > 0 && (
