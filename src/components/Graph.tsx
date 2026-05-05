@@ -493,6 +493,76 @@ function GraphSvg() {
     return unsub;
   }, [ready]);
 
+  // ── Keyboard graph traversal ─────────────────────────────────────────
+  // Arrow keys move selection to the nearest 1-hop neighbour in that
+  // direction. Esc clears selection. Skipped when an input or
+  // contenteditable is focused so it doesn't fight the editor.
+  useEffect(() => {
+    if (!ready) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('input, textarea, [contenteditable="true"]')) return;
+      const sim = simRef.current;
+      if (!sim) return;
+      const state = useGraphStore.getState();
+
+      if (e.key === 'Escape') {
+        if (state.selectedNodeId) {
+          e.preventDefault();
+          state.selectNode(null);
+        }
+        return;
+      }
+
+      const id = state.selectedNodeId;
+      if (!id) return;
+      const current = sim.nodes().find((n) => n.id === id);
+      if (!current) return;
+
+      // Build neighbour list (both directions count for traversal).
+      const neighbours: SimNode[] = [];
+      for (const edge of state.edges) {
+        const otherId = edge.source === id ? edge.target : edge.target === id ? edge.source : null;
+        if (!otherId) continue;
+        const n = sim.nodes().find((x) => x.id === otherId);
+        if (n && !neighbours.includes(n)) neighbours.push(n);
+      }
+      if (neighbours.length === 0) return;
+
+      const ARROW: Record<string, [number, number] | undefined> = {
+        ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+      };
+      const dir = ARROW[e.key];
+      if (!dir) return;
+      e.preventDefault();
+
+      const cx = current.x ?? 0;
+      const cy = current.y ?? 0;
+      // Score: in-direction neighbours, weighted by angle deviation +
+      // distance. Reject neighbours behind the cursor (negative dot).
+      let best: { n: SimNode; score: number } | null = null;
+      for (const n of neighbours) {
+        const dx = (n.x ?? 0) - cx;
+        const dy = (n.y ?? 0) - cy;
+        const dot = dx * dir[0] + dy * dir[1];
+        if (dot <= 0) continue;
+        const dist = Math.hypot(dx, dy);
+        const wantAngle = Math.atan2(dir[1], dir[0]);
+        const haveAngle = Math.atan2(dy, dx);
+        let angleDelta = Math.abs(haveAngle - wantAngle);
+        if (angleDelta > Math.PI) angleDelta = 2 * Math.PI - angleDelta;
+        const score = dist + angleDelta * 200;
+        if (!best || score < best.score) best = { n, score };
+      }
+      if (best) {
+        state.selectNode(best.n.id);
+        state.flyToNode(best.n.id);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ready]);
+
   return (
     <svg
       ref={svgRef}
