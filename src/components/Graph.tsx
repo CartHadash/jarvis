@@ -33,7 +33,13 @@ import { GraphCanvas } from '@/components/GraphCanvas';
 const EDGE_DIM = 0.12;
 const NODE_DIM = 0.15;
 const CANVAS_THRESHOLD = 200;
-const LABEL_ZOOM_THRESHOLD = 1.5;
+// Cursor "flashlight" model for label visibility:
+// labels appear for the nearest MAX_PROXIMITY_LABELS nodes within
+// PROXIMITY_RADIUS_PX of the cursor (screen-space), with smooth
+// distance-based fade. Selected/hovered nodes and their 1-hop neighbors
+// are always labeled regardless of cursor position.
+const PROXIMITY_RADIUS_PX = 180;
+const MAX_PROXIMITY_LABELS = 8;
 
 const NODE_TYPE_COLORS: Record<string, string> = {
   concept: '#3b82f6',    // blue
@@ -118,8 +124,8 @@ function GraphSvg() {
       })
       .on('zoom', (event) => {
         viewport.attr('transform', event.transform.toString());
-        currentZoom = event.transform.k;
-        updateLabelVisibility();
+        // Re-evaluate proximity labels: zoom changes screen-space distances.
+        scheduleLabelUpdate(focusedId);
       });
     root.call(zoom);
     zoomRef.current = zoom;
@@ -198,8 +204,6 @@ function GraphSvg() {
       .style('pointer-events', 'none')
       .style('user-select', 'none');
 
-    // Track current zoom scale for label visibility decisions.
-    let currentZoom = 1;
     // Track focused (clicked) node for persistent highlighting.
     let focusedId: string | null = null;
 
@@ -239,15 +243,46 @@ function GraphSvg() {
       }
     };
 
-    /** Update node label visibility based on zoom level and active (hover/focus) state. */
+    // Cursor "flashlight" state — updated on mousemove, applied on rAF.
+    let cursorPx: { x: number; y: number } | null = null;
+    let labelRaf: number | null = null;
+
+    /** Update node label visibility using the cursor-proximity model. */
     const updateLabelVisibility = (activeId: string | null = null) => {
-      const highZoom = currentZoom >= LABEL_ZOOM_THRESHOLD;
       const neighbors = getNeighbors(activeId);
+      const proxOpacity = new Map<string, number>();
+      if (cursorPx) {
+        const t = d3.zoomTransform(svg);
+        const distances: { id: string; d: number }[] = [];
+        for (const n of simNodes) {
+          if (neighbors.has(n.id)) continue;
+          const sx = t.applyX(n.x ?? 0);
+          const sy = t.applyY(n.y ?? 0);
+          const dist = Math.hypot(sx - cursorPx.x, sy - cursorPx.y);
+          if (dist <= PROXIMITY_RADIUS_PX) distances.push({ id: n.id, d: dist });
+        }
+        distances.sort((a, b) => a.d - b.d);
+        const k = Math.min(distances.length, MAX_PROXIMITY_LABELS);
+        for (let i = 0; i < k; i++) {
+          const { id, d } = distances[i];
+          // Smooth fade: opacity = 1 at cursor, 0 at PROXIMITY_RADIUS_PX.
+          proxOpacity.set(id, Math.max(0, 1 - d / PROXIMITY_RADIUS_PX));
+        }
+      }
       nodeSel.select<SVGTextElement>('text.node-label')
         .attr('fill-opacity', (d) => {
           if (neighbors.has(d.id)) return 1;
-          return highZoom ? 0.8 : 0;
+          return proxOpacity.get(d.id) ?? 0;
         });
+    };
+
+    /** rAF-throttled wrapper for mousemove-driven updates. */
+    const scheduleLabelUpdate = (activeId: string | null = null) => {
+      if (labelRaf != null) return;
+      labelRaf = requestAnimationFrame(() => {
+        labelRaf = null;
+        updateLabelVisibility(activeId);
+      });
     };
 
     // Background click: deselect + reset focus.
@@ -258,6 +293,16 @@ function GraphSvg() {
         applyHighlight(null);
         updateLabelVisibility(null);
       }
+    });
+
+    // Cursor flashlight: track pointer in SVG-local coords, schedule rAF.
+    root.on('mousemove.proximity', (event: MouseEvent) => {
+      cursorPx = { x: event.offsetX, y: event.offsetY };
+      scheduleLabelUpdate(focusedId);
+    });
+    root.on('mouseleave.proximity', () => {
+      cursorPx = null;
+      scheduleLabelUpdate(focusedId);
     });
 
     // Node entrance animation: fade + scale 0.3 → 1 over 300ms.
@@ -347,6 +392,10 @@ function GraphSvg() {
         .attr('y', (d) => (((d.source as SimNode).y ?? 0) + ((d.target as SimNode).y ?? 0)) / 2 - 4);
 
       nodeSel.attr('transform', (d) => `translate(${d.x ?? 0}, ${d.y ?? 0})`);
+
+      // Re-evaluate proximity labels while the simulation is moving so
+      // they track moving nodes. rAF-throttle keeps this cheap.
+      if (cursorPx) scheduleLabelUpdate(focusedId);
     });
 
     // ── Resize handler ─────────────────────────────────────────────────
@@ -359,6 +408,7 @@ function GraphSvg() {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      if (labelRaf != null) cancelAnimationFrame(labelRaf);
       sim.stop();
     };
   }, [nodes, edges, hoverNode, selectNode]);
