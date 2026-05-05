@@ -455,7 +455,8 @@ function GraphSvg() {
 
   // ── Fly-to effect: subscribes to the store counter so external
   // requests (sidebar search, QuickAdd, NodePanel chip) trigger camera
-  // movement without prop drilling. ────────────────────────────────────
+  // movement without prop drilling. Also spawns a 3-pulse halo at the
+  // target so the user can see *which* node the camera landed on. ─────
   useEffect(() => {
     if (!ready) return;
     const unsub = useGraphStore.subscribe(
@@ -470,6 +471,7 @@ function GraphSvg() {
         const target = sim.nodes().find((n) => n.id === id);
         if (!target) return;
         flyTo(svg, zoom, target.x ?? 0, target.y ?? 0, 1.8);
+        spawnPulse(svg, target.x ?? 0, target.y ?? 0, target.radius ?? 8);
       },
     );
     return unsub;
@@ -517,4 +519,40 @@ function flyTo(
   const { width, height } = svg.getBoundingClientRect();
   const t = d3.zoomIdentity.translate(width / 2 - x * k, height / 2 - y * k).scale(k);
   d3.select(svg).transition().duration(500).ease(d3.easeCubicInOut).call(zoom.transform, t);
+}
+
+/**
+ * Spawn 3 expanding halo rings at (x, y) in viewport-space. Each ring
+ * grows from `radius` to `radius * 3.5` and fades 0.6 → 0 over 1.2s.
+ * Pulses are staggered 350ms apart so they overlap into a "ripple".
+ */
+function spawnPulse(svg: SVGSVGElement, x: number, y: number, radius: number) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const viewport = d3.select(svg).select<SVGGElement>('g.viewport');
+  if (viewport.empty()) return;
+  const PULSE_COUNT = 3;
+  const STAGGER_MS = 350;
+  const DURATION_MS = 1200;
+  const COLOR = '#fbbf24'; // amber accent
+  for (let i = 0; i < PULSE_COUNT; i++) {
+    const ring = viewport
+      .append('circle')
+      .attr('cx', x)
+      .attr('cy', y)
+      .attr('r', radius)
+      .attr('fill', 'none')
+      .attr('stroke', COLOR)
+      .attr('stroke-width', 2)
+      .attr('opacity', 0)
+      .style('pointer-events', 'none');
+    ring
+      .transition()
+      .delay(i * STAGGER_MS)
+      .duration(DURATION_MS)
+      .ease(d3.easeCubicOut)
+      .attr('r', radius * 3.5)
+      .attr('opacity', 0)
+      .attrTween('opacity', () => (t) => String(0.6 * (1 - t)))
+      .on('end', function () { d3.select(this).remove(); });
+  }
 }
