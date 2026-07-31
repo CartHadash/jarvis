@@ -32,3 +32,6 @@ npm-debug.log*
 # Tooling
 .playwright-mcp/
 .claude/
+
+# Private project notes (kept local, not published)
+CLAUDE.md

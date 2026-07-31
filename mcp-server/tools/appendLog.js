@@ -8,9 +8,9 @@
 
 import { z } from 'zod';
 
-export const name = 'jarvis_append_log';
+export const name = 'jarvis_append_daily_log';
 export const description =
-  'Append a one-paragraph session summary to today\'s daily log. Call at the end of a Claude session to maintain continuity.';
+  'Append a one-paragraph summary of the current Claude session to today\'s daily log. CALL THIS at the end of a session (or when wrapping a coherent block of work) so a future Claude can recall what was discussed. One paragraph, not one line. Pair with jarvis_recent_daily_logs to read these back. Different from jarvis_append_session_log (per-action breadcrumbs).';
 export const inputSchema = z
   .object({
     summary: z

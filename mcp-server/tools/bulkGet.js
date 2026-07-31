@@ -11,7 +11,7 @@ import { fetchNode } from './getNode.js';
 
 export const name = 'jarvis_bulk_get';
 export const description =
-  'Fetch full content for an array of node ids in a single call. Returns the same per-node shape as jarvis_get_node, in the same order. Missing ids are reported in `notFound`. Content is markdown by default.';
+  'Fetch FULL content for up to 100 nodes in a single call. USE THIS instead of multiple jarvis_get_node calls whenever you need ≥2 nodes — eliminates per-call envelope overhead and is much cheaper than looping. Same per-node shape as jarvis_get_node. Missing ids are reported in `notFound`. Content is markdown by default. If you only need summaries, prefer jarvis_get_summaries.';
 export const inputSchema = z
   .object({
     ids: z.array(z.string().min(1)).min(1).max(100),

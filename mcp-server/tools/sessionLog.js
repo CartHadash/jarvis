@@ -19,7 +19,7 @@ const TYPES = [
 
 export const name = 'jarvis_append_session_log';
 export const description =
-  'Append an entry to the Jarvis session log. Use to leave a trail of meaningful Claude-driven changes.';
+  'Append a single-line breadcrumb to the per-event session log. CALL THIS every time you create, update, delete, or connect nodes during a Claude session — leaves a recoverable trail of what changed and why. One short sentence per call. (Different from jarvis_append_daily_log which is a once-per-session paragraph summary.)';
 export const inputSchema = z
   .object({
     content: z.string().min(1),

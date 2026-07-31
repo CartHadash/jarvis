@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 export const name = 'jarvis_get_summaries';
 export const description =
-  'Return lightweight summaries (id, title, summary, node_type, tags) for an array of node IDs. Use this for cheap context retrieval without loading full content.';
+  'Return lightweight summaries (id, title, summary, node_type, tags) for an array of node ids. USE THIS instead of jarvis_get_node when you need to scan multiple nodes (≥3) and only need their gist — the `summary` field tells you whether a node is relevant before paying for full content. Cheapest multi-node retrieval available; prefer over jarvis_bulk_get when you do not need full content.';
 export const inputSchema = z
   .object({
     ids: z.array(z.string().min(1)).min(1),

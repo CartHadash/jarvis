@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 export const name = 'jarvis_get_backlinks';
 export const description =
-  'List every node that has an edge pointing TO the given node id. Returns lightweight rows: source id, source title, edge label.';
+  'List every node that has an edge pointing TO the given node id (incoming references / "backlinks"). USE THIS to answer questions like "what mentions X?", "what depends on X?", or "what builds on X?" — jarvis_get_node only returns OUTGOING edges, so backlinks need this tool. Returns lightweight rows: source id, source title, edge label, created_by, created_at.';
 export const inputSchema = z.object({ id: z.string().min(1) }).strict();
 
 export function handler({ id }, db) {
