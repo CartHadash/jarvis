@@ -4,7 +4,7 @@
 
 ![Jarvis graph view](screenshots/graph-view.png)
 
-I've decided to create this to help myself with keeping track of interesting articles, news and ideas which I would also be able to link with each other. For me no other tool could do it the same and that's why I decided to make Jarvis. I think it could be useful for anyone who is trying to keep up with the news, his personal ideas and inspirations in this fast growing technological world.
+I've decided to create this to help myself with keeping track of interesting articles, news and ideas which I would also be able to link with each other. For me no other tool could do it the same as this.
 
 - 🧠 Every node is interactable and can be opened, moved and deleted. A collection of those nodes moves as a whole.
 - 🔗 Different types of connections ensuring each idea is uniquely linked to other nodes
@@ -94,3 +94,7 @@ npm run tauri:build    # build a .dmg into src-tauri/target/release/bundle/
 ---
 
 ## License
+
+This project is licensed under the [MIT License](LICENSE) — see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 CartHadash
