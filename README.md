@@ -1,27 +1,14 @@
-<!--
-  ─────────────────────────────────────────────────────────────
-  SKELETON README — fill in the blanks marked with 〔 〕
-  Everything in <!-- comments --> is invisible on GitHub.
-  Delete each comment once you've done what it says.
-  ─────────────────────────────────────────────────────────────
--->
-
 # Jarvis
 
-**〔One line: what Jarvis is, in your own words. This shows up in search results and under the repo title — make it count.〕**
+**Jarvis is a tool that helps with storing and organizing data with a system of connections**
 
-<!--
-  HERO SCREENSHOT — the single most important image.
-  Use your best-looking graph view. Wide, not tall.
-  Save it as screenshots/graph-view.png
--->
 ![Jarvis graph view](screenshots/graph-view.png)
 
-〔Two or three sentences. Why does this exist? What problem were you solving for yourself? People decide whether to keep reading here — write like you're telling a friend, not writing a spec.〕
+I've decided to create this to help myself with keeping track of interesting articles, news and ideas which I would also be able to link with each other. For me no other tool could do it the same and that's why I decided to make Jarvis. I think it could be useful for anyone who is trying to keep up with the news, his personal ideas and inspirations in this fast growing technological world.
 
-- 🧠 〔feature — e.g. every note is a node you can see and navigate〕
-- 🔗 〔feature — e.g. eight kinds of connection, not just "related"〕
-- 🤖 〔feature — e.g. Claude can read and write your notes directly〕
+- 🧠 Every node is interactable and can be opened, moved and deleted. A collection of those nodes moves as a whole.
+- 🔗 Different types of connections ensuring each idea is uniquely linked to other nodes
+- 🤖 MCP tool for Claude can be used not only to read and create individual nodes but also analyze your graph as a whole
 - 🔒 Local-first. No accounts, no cloud, no telemetry.
 
 ---
@@ -42,26 +29,22 @@ Your notes live at `~/Library/Application Support/app.jarvis/jarvis.db` and neve
 
 ## Screenshots
 
-<!--
-  Add 2-4 more. Capture a window with ⌘⇧4 then Space, then click the window.
-  Name files without spaces. Drop them in the screenshots/ folder.
--->
 
-### 〔The editor〕
+### The Node Editor
 ![Node editor](screenshots/node-editor.png)
 
-〔One line on what the reader is looking at.〕
+Each node is viewed separately with a nice zoom in effect
 
-### 〔The command palette〕
+### The Command Palette
 ![Command palette](screenshots/command-palette.png)
 
-〔One line. Mention ⌘K, /lint, /ingest — they're genuinely interesting.〕
+By pressing ⌘K a command palette could be opened with a choice of unique commands
 
 ---
 
 ## Using it with Claude
 
-〔A sentence on why this is the good bit — Claude reads and writes your graph directly, so your notes become context it actually has.〕
+By implementing it with Claude's MCP tool I wanted to give it a possibility to be a part of context Claude has about my ideas and interests that could help in brainstorming and executing
 
 Add this to Claude Desktop's config at
 `~/Library/Application Support/Claude/claude_desktop_config.json`:
@@ -111,5 +94,3 @@ npm run tauri:build    # build a .dmg into src-tauri/target/release/bundle/
 ---
 
 ## License
-
-〔Pick one, or delete this section. MIT is the usual choice for a personal project you're happy for people to reuse — github.com/CartHadash/jarvis → Add file → Create new file → type `LICENSE` and GitHub offers you a template picker.〕
