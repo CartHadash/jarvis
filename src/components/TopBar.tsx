@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useGraphStore } from '@/hooks/useGraph';
 
@@ -6,11 +6,26 @@ interface TopBarProps {
   onOpenSettings?: () => void;
 }
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 export function TopBar({ onOpenSettings }: TopBarProps) {
   const { theme, toggle } = useTheme();
   const openQuickAdd = useGraphStore((s) => s.setQuickAddOpen);
   const bootstrap = useGraphStore((s) => s.bootstrap);
+  const nodes = useGraphStore((s) => s.nodes);
+  const edges = useGraphStore((s) => s.edges);
   const [spinning, setSpinning] = useState(false);
+
+  // An orphan is a node no edge touches in either direction. They are the
+  // notes that quietly fall out of the graph, so they are worth surfacing.
+  const orphanCount = useMemo(() => {
+    const connected = new Set<string>();
+    for (const edge of edges) {
+      connected.add(edge.source);
+      connected.add(edge.target);
+    }
+    return nodes.filter((node) => !connected.has(node.id)).length;
+  }, [nodes, edges]);
 
   const handleRefresh = async () => {
     setSpinning(true);
@@ -34,6 +49,13 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
         />
         <span className="font-mono text-[11px] font-semibold tracking-[0.25em] text-text">
           JARVIS
+        </span>
+        <span
+          className="font-mono text-[11px] text-muted"
+          title="Orphans are nodes with no connections — link them or they get lost"
+        >
+          {plural(nodes.length, 'node')} · {plural(edges.length, 'link')} ·{' '}
+          {plural(orphanCount, 'orphan')}
         </span>
       </div>
 
